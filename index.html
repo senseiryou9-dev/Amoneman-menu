@@ -1,469 +1,61 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#FDFBF7" />
-<title>Amoneman - Balinese Food & Drink</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          ivory: '#FDFBF7',
-          terracotta: {
-            DEFAULT: '#C0563A',
-            50: '#FBEEEA',
-            100: '#F6DDD3',
-            200: '#EDBBA8',
-            300: '#E0967C',
-            400: '#D07458',
-            500: '#C0563A',
-            600: '#A0432C',
-            700: '#7D3423',
-            800: '#5C271A'
-          }
-        },
-        fontFamily: {
-          sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif']
-        }
-      }
-    }
-  };
-</script>
-
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-
-<style>
-  * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  ::-webkit-scrollbar { display: none; }
-  html, body { background-color: #FDFBF7; }
-  body { margin: 0; }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
-</head>
-<body class="bg-ivory">
-<div id="root"></div>
-
-<script type="text/babel">
-const { useState, useRef, useMemo, useEffect } = React;
-
-function formatRupiah(amount) {
-  return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
-}
-
-function IconX({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg>;
-}
-function IconPlus({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /><path d="M12 5v14" /></svg>;
-}
-function IconMinus({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /></svg>;
-}
-function IconCheck({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5" /></svg>;
-}
-function IconChevronRight({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6" /></svg>;
-}
-function IconChevronDown({ size = 18, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6" /></svg>;
-}
-function IconShoppingBag({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>;
-}
-function IconMessageCircle({ size = 20, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>;
-}
-function IconImage({ size = 24, className = '' }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>;
-}
-function Flourish({ className = '' }) {
-  return <svg width="44" height="18" viewBox="0 0 44 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className={className}><path d="M22 17C22 10 19 5 14 2" /><path d="M22 17C22 9 22 4 22 1" /><path d="M22 17C22 10 25 5 30 2" /></svg>;
-}
-
-const CATEGORIES = ['Balinese Specials', 'Western & Modern', 'Coffee', 'Non-Coffee', 'Milkshake', 'Juice'];
-
-const MENU_ITEMS = [
-  { id: 1, name: 'Kuah Balung', price: 15000, category: 'Balinese Specials', image: './kuah-balung.jpg' },
-  { id: 2, name: 'Lawar Babi', price: 15000, category: 'Balinese Specials', image: './lawar-babi.jpg' },
-  { id: 3, name: 'Lawar Kambing', price: 20000, category: 'Balinese Specials', image: './lawar-kambing.jpg' },
-  { id: 4, name: 'Crispy Chicken Burger', price: 40000, category: 'Western & Modern', image: './crispy-chicken-burger.jpg' },
-  { id: 5, name: 'Butter Rice', price: 15000, category: 'Balinese Specials', image: './butter-rice.jpg' },
-  { id: 6, name: 'Kacang Pedas Manis', price: 15000, category: 'Balinese Specials', image: './kacang-pedas-manis.jpg' },
-  { id: 7, name: 'Chicken Wings', price: 25000, category: 'Western & Modern', image: './chicken-wings.jpg' },
-  { id: 8, name: 'Plecing Kangkung', price: 10000, category: 'Balinese Specials', image: './plecing-kangkung.jpg' },
-  { id: 9, name: 'Babi Goreng Sambal Matah', price: 30000, category: 'Balinese Specials', image: './babi-goreng-sambal-matah.jpg' },
-  { id: 10, name: 'Cah Kangkung', price: 10000, category: 'Balinese Specials', image: './cah-kangkung.jpg' },
-  { id: 11, name: 'Babi Goreng Sambal Merah', price: 30000, category: 'Balinese Specials', image: './babi-goreng-sambal-merah.jpg' },
-  { id: 12, name: 'Grill Chicken', price: 40000, category: 'Western & Modern', image: './grill-chicken.jpg' },
-  { id: 13, name: 'Babi Rica', price: 30000, category: 'Balinese Specials', image: './babi-rica.jpg' },
-  { id: 14, name: 'Chicken Mushroom', price: 40000, category: 'Western & Modern', image: './chicken-mushroom.jpg' },
-  { id: 15, name: 'Onion', price: 25000, category: 'Western & Modern', image: './onion.jpg' },
-  { id: 16, name: 'Chicken Parmigiana', price: 40000, category: 'Western & Modern', image: './chicken-parmigiana.jpg' },
-  { id: 17, name: 'Nasi Goreng', price: 25000, category: 'Balinese Specials', image: './nasi-goreng.jpg' },
-  { id: 18, name: 'Ayam Pedas Manis', price: 25000, category: 'Balinese Specials', image: './ayam-pedas-manis.jpg' },
-  { id: 19, name: 'Nasi Goreng Babi', price: 30000, category: 'Balinese Specials', image: './nasi-goreng-babi.jpg' },
-  { id: 20, name: 'Capcay Ayam', price: 20000, category: 'Balinese Specials', image: './capcay-ayam.jpg' },
-  { id: 21, name: 'Nasi Goreng Seafood', price: 35000, category: 'Balinese Specials', image: './nasi-goreng-seafood.jpg' },
-  { id: 22, name: 'Capcay Babi', price: 25000, category: 'Balinese Specials', image: './capcay-babi.jpg' },
-  { id: 23, name: 'Nasi Goreng Spesial', price: 30000, category: 'Balinese Specials', image: './nasi-goreng-spesial.jpg' },
-  { id: 24, name: 'Ayam Bakar', price: 25000, category: 'Balinese Specials', image: './ayam-bakar.jpg' },
-  { id: 25, name: 'Mie Goreng', price: 25000, category: 'Balinese Specials', image: './mie-goreng.jpg' },
-  { id: 26, name: 'Ayam Goreng', price: 25000, category: 'Balinese Specials', image: './ayam-goreng.jpg' },
-  { id: 27, name: 'Mie Goreng Babi', price: 30000, category: 'Balinese Specials', image: './mie-goreng-babi.jpg' },
-  { id: 28, name: 'Mie Goreng Seafood', price: 35000, category: 'Balinese Specials', image: './mie-goreng-seafood.jpg' },
-  { id: 29, name: 'B Babi Rica', price: 30000, category: 'Balinese Specials', image: './b-babi-rica.jpg' },
-  { id: 30, name: 'Mie Goreng Spesial', price: 30000, category: 'Balinese Specials', image: './mie-goreng-spesial.jpg' },
-  { id: 31, name: 'B Babi Sambal Matah', price: 30000, category: 'Balinese Specials', image: './b-babi-sambal-matah.jpg' },
-  { id: 32, name: 'Nugget Scallops', price: 30000, category: 'Western & Modern', image: './nugget-scallops.jpg' },
-  { id: 33, name: 'B Ayam', price: 30000, category: 'Balinese Specials', image: './b-ayam.jpg' },
-  { id: 34, name: 'French Fries', price: 15000, category: 'Western & Modern', image: './french-fries.jpg' },
-  { id: 35, name: 'Carbonara', price: 30000, category: 'Western & Modern', image: './carbonara.jpg' },
-  { id: 36, name: 'Sosis Bakar', price: 25000, category: 'Balinese Specials', image: './sosis-bakar.jpg' },
-  { id: 37, name: 'Bolognese', price: 30000, category: 'Western & Modern', image: './bolognese.jpg' },
-  { id: 38, name: 'Spring Roll', price: 20000, category: 'Balinese Specials', image: './spring-roll.jpg' },
-  { id: 39, name: 'Pizza Ayam', price: 50000, category: 'Western & Modern', image: './pizza-ayam.jpg' },
-  { id: 40, name: 'Lumpia Udang Mozza', price: 25000, category: 'Balinese Specials', image: './lumpia-udang-mozza.jpg' },
-  { id: 41, name: 'Pizza Babi', price: 55000, category: 'Western & Modern', image: './pizza-babi.jpg' },
-  { id: 42, name: 'Chicken Burger', price: 35000, category: 'Western & Modern', image: './chicken-burger.jpg' },
-  { id: 43, name: 'Pizza Amo', price: 65000, category: 'Western & Modern', image: './pizza-amo.jpg' },
-
-  { id: 44, name: 'Kopi Susu Amo', price: 25000, category: 'Coffee', image: './iced-coffee-latte.jpg' },
-  { id: 45, name: 'Coffe Latte', price: 25000, category: 'Coffee', image: './coffe-latte.jpg' },
-  { id: 46, name: 'Caramel Coffe Latte', price: 25000, category: 'Coffee', image: './caramel-coffe-latte.jpg' },
-  { id: 47, name: 'Vanilla Coffee Latte', price: 25000, category: 'Coffee', image: './vanilla-coffee-latte.jpg' },
-  { id: 48, name: 'Matcha Coffee Latte', price: 25000, category: 'Coffee', image: './matcha-coffee-latte-hot.jpg' },
-  { id: 49, name: 'Americano', price: 25000, category: 'Coffee', image: './americano.jpg' },
-  { id: 50, name: 'Long Black', price: 25000, category: 'Coffee', image: './long-black.jpg' },
-  { id: 51, name: 'Capuccino', price: 25000, category: 'Coffee', image: './capuccino-hot.jpg' },
-  { id: 52, name: 'Vietnam Drip', price: 25000, category: 'Coffee', image: './vietnam-drip.jpg' },
-
-  { id: 53, name: 'Tea', price: 10000, category: 'Non-Coffee', image: './tea.jpg' },
-  { id: 54, name: 'Ginger Tea', price: 10000, category: 'Non-Coffee', image: './ginger-tea.jpg' },
-  { id: 55, name: 'Lemon Tea', price: 15000, category: 'Non-Coffee', image: './lemon-tea.jpg' },
-  { id: 56, name: 'Lychee Tea', price: 15000, category: 'Non-Coffee', image: './lychee-tea.jpg' },
-  { id: 57, name: 'Lemon Water', price: 15000, category: 'Non-Coffee', image: './lemon-water-ice.jpg' },
-
-  { id: 58, name: 'Matcha', price: 25000, category: 'Milkshake', image: './matcha-milkshake.png' },
-  { id: 59, name: 'Red Velvet', price: 25000, category: 'Milkshake', image: './red-velvet-milkshake.png' },
-  { id: 60, name: 'Taro', price: 25000, category: 'Milkshake', image: './taro-milkshake.png' },
-  { id: 61, name: 'Chocolate', price: 25000, category: 'Milkshake', image: './chocolate-milkshake.png' },
-  { id: 62, name: 'Chocolate Hazelnut', price: 25000, category: 'Milkshake', image: './choco-hazelnut.png' },
-  { id: 63, name: 'Strawberry', price: 25000, category: 'Milkshake', image: './strawberry-milkshake.jpg' },
-  { id: 64, name: 'Vanilla', price: 25000, category: 'Milkshake', image: './vanilla-milkshake.png' },
-  { id: 65, name: 'Caramel', price: 25000, category: 'Milkshake', image: './caramel-milkshake.png' },
-  { id: 66, name: 'Hazelnut', price: 25000, category: 'Milkshake', image: './hazelnut-milkshake.png' },
-
-  { id: 67, name: 'Melon', price: 17000, category: 'Juice', image: './melon-juice.jpg' },
-  { id: 68, name: 'Watermelon', price: 17000, category: 'Juice', image: './watermelon-juice.png' },
-  { id: 69, name: 'Mango', price: 17000, category: 'Juice', image: './mango-juice.png' },
-  { id: 70, name: 'Avocado', price: 17000, category: 'Juice', image: './avocado-juice.png' },
-  { id: 71, name: 'Wortel', price: 17000, category: 'Juice', image: './wortel-juice.png' },
-  { id: 72, name: 'Tomato', price: 17000, category: 'Juice', image: './tomato-juice.png' },
-  { id: 73, name: 'Nanas / Pineapple', price: 17000, category: 'Juice', image: './pineapple-juice.jpg' },
-  { id: 74, name: 'Buah Naga', price: 17000, category: 'Juice', image: './dragon-fruit-juice.jpg' }
-];
-
-function DishImage({ src, alt, className }) {
-  const [errored, setErrored] = useState(false);
-  if (errored) {
-    return <div className={`${className} flex items-center justify-center bg-terracotta-50`}><IconImage size={26} className="text-terracotta-300" /></div>;
-  }
-  return <img src={src} alt={alt} loading="lazy" onError={() => setErrored(true)} className={`${className} object-cover bg-neutral-100`} />;
-}
-
-function Header() {
-  const [imgError, setImgError] = useState(false);
-  return (
-    <header className="sticky top-0 z-30 flex items-center justify-center border-b border-neutral-100 bg-white py-2">
-      {imgError ? (
-        <div className="flex h-24 items-center justify-center"><span className="text-3xl font-extrabold tracking-[0.15em] text-terracotta">AMONEMAN</span></div>
-      ) : (
-        <img src="./logo.jpg" alt="Amoneman Logo" className="h-24 object-contain" onError={() => setImgError(true)} />
-      )}
-    </header>
-  );
-}
-
-function OrderInfoForm({ name, table, nameError, tableError, onNameChange, onTableChange, nameRef, tableRef }) {
-  return (
-    <section className="px-4 pb-3 pt-5">
-      <p className="-mt-1 mb-3 text-sm font-medium text-neutral-400">Pesan langsung dari meja Anda</p>
-      <div className="mb-4">
-        <label htmlFor="customerName" className="mb-1.5 block text-sm font-semibold text-neutral-700">Nama Pemesan</label>
-        <input id="customerName" ref={nameRef} type="text" value={name} onChange={onNameChange} placeholder="Masukkan nama Anda" className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-[15px] text-neutral-800 placeholder-neutral-400 transition focus:ring-4 ${nameError ? 'border-red-400 focus:ring-red-100' : 'border-neutral-200 focus:border-terracotta focus:ring-terracotta-50'}`} />
-        {nameError && <p className="mt-1.5 text-xs font-medium text-red-500">Nama pemesan wajib diisi</p>}
-      </div>
-      <div>
-        <label htmlFor="tableNumber" className="mb-1.5 block text-sm font-semibold text-neutral-700">Pilih Meja</label>
-        <div className="relative">
-          <select id="tableNumber" ref={tableRef} value={table} onChange={onTableChange} className={`w-full appearance-none rounded-2xl border bg-white px-4 py-3.5 pr-10 text-[15px] transition focus:ring-4 ${table === '' ? 'text-neutral-400' : 'text-neutral-800'} ${tableError ? 'border-red-400 focus:ring-red-100' : 'border-neutral-200 focus:border-terracotta focus:ring-terracotta-50'}`}>
-            <option value="" disabled>Pilih nomor meja</option>
-            <option value="Take Away">Bawa Pulang (Take Away)</option>
-            <option value="Meja 1">Meja 1</option>
-            <option value="Meja 2">Meja 2</option>
-            <option value="Meja 3">Meja 3</option>
-            <option value="Meja 4">Meja 4</option>
-            <option value="Meja 5">Meja 5</option>
-            <option value="Meja 6">Meja 6</option>
-            <option value="Meja 7">Meja 7</option>
-            <option value="Meja 8">Meja 8</option>
-          </select>
-          <IconChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" />
-        </div>
-        {tableError && <p className="mt-1.5 text-xs font-medium text-red-500">Silakan pilih nomor meja</p>}
-      </div>
-    </section>
-  );
-}
-
-function CategoryTabs({ categories, active, onChange }) {
-  return (
-    <div className="flex gap-2 overflow-x-auto px-4 pb-3 mt-4">
-      {categories.map((cat) => (
-        <button key={cat} type="button" onClick={() => onChange(cat)} className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 ${active === cat ? 'bg-terracotta text-white shadow-md shadow-terracotta/25' : 'border border-neutral-200 bg-white text-neutral-500'}`}>{cat}</button>
-      ))}
-    </div>
-  );
-}
-
-function MenuCard({ item, qtyInCart, onAdd }) {
-  return (
-    <article className="flex items-center gap-3 rounded-3xl border border-neutral-100 bg-white p-3 shadow-sm shadow-neutral-200/40">
-      <DishImage src={item.image} alt={item.name} className="h-20 w-20 shrink-0 rounded-2xl" />
-      <div className="min-w-0 flex-1">
-        <h3 className="truncate text-[15px] font-bold text-neutral-800">{item.name}</h3>
-        <p className="mt-1 text-[15px] font-extrabold text-terracotta">{formatRupiah(item.price)}</p>
-      </div>
-      <button type="button" onClick={() => onAdd(item.id)} className="relative shrink-0 rounded-full border-2 border-terracotta px-4 py-2 text-sm font-bold text-terracotta transition active:scale-95 active:bg-terracotta-50">
-        Tambah
-        {qtyInCart > 0 && <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-[11px] font-bold text-white">{qtyInCart}</span>}
-      </button>
-    </article>
-  );
-}
-
-function CartBar({ count, total, onClick }) {
-  if (count === 0) return null;
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center">
-      <div className="w-full max-w-md px-4" style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))' }}>
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-neutral-100 bg-white p-2 pl-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]" style={{ animation: 'slideUp 0.25s ease-out' }}>
-          <div className="flex items-center gap-2 text-neutral-700">
-            <IconShoppingBag size={18} />
-            <span className="text-sm font-semibold">{count} item</span>
-            <span className="text-neutral-300">|</span>
-            <span className="text-sm font-extrabold text-neutral-900">{formatRupiah(total)}</span>
-          </div>
-          <button type="button" onClick={onClick} className="flex items-center gap-1 rounded-full bg-terracotta px-5 py-3 text-sm font-bold text-white shadow-lg shadow-terracotta/30 transition active:scale-95">
-            Cek Pesanan <IconChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CartModal({ isOpen, onClose, cart, menuById, onIncrement, onDecrement, onNoteChange, total, onCheckout }) {
-  return (
-    <React.Fragment>
-      <div onClick={onClose} className={`fixed inset-0 z-40 bg-neutral-900/40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`} />
-      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center">
-        <div className={`flex max-h-[86vh] w-full max-w-md flex-col overflow-hidden rounded-t-[28px] bg-ivory shadow-2xl transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}>
-          <div className="flex justify-center pt-3"><div className="h-1.5 w-10 rounded-full bg-neutral-300" /></div>
-          <div className="flex items-center justify-between px-5 pb-3 pt-2">
-            <h2 className="text-lg font-extrabold text-neutral-900">Pesanan Anda</h2>
-                     <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 transition active:scale-90"><IconX size={16} /></button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-5">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <IconShoppingBag size={36} className="mb-3 text-neutral-300" />
-                <p className="font-medium text-neutral-400">Keranjang Anda masih kosong</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-neutral-100">
-                {cart.map((line) => {
-                  const item = menuById[line.id];
-                  return (
-                    <div key={line.id} className="flex gap-3 py-4">
-                      <DishImage src={item.image} alt={item.name} className="h-14 w-14 shrink-0 rounded-xl" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="text-sm font-bold leading-snug text-neutral-800">{item.name}</h4>
-                          <span className="shrink-0 text-sm font-extrabold text-neutral-900">{formatRupiah(item.price * line.qty)}</span>
-                        </div>
-                        <p className="mt-0.5 text-xs text-neutral-400">{formatRupiah(item.price)} / porsi</p>
-                        <div className="mt-2 flex items-center gap-3 rounded-full border border-neutral-200 bg-white px-1 py-1 w-fit">
-                          <button type="button" onClick={() => onDecrement(line.id)} className="flex h-6 w-6 items-center justify-center rounded-full text-terracotta transition active:scale-90"><IconMinus size={14} /></button>
-                          <span className="w-4 text-center text-sm font-bold text-neutral-800">{line.qty}</span>
-                          <button type="button" onClick={() => onIncrement(line.id)} className="flex h-6 w-6 items-center justify-center rounded-full text-terracotta transition active:scale-90"><IconPlus size={14} /></button>
-                        </div>
-                        <input type="text" value={line.note} onChange={(e) => onNoteChange(line.id, e.target.value)} placeholder="Tambahkan catatan (mis. tidak pedas)" maxLength={120} className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-700 placeholder-neutral-400 transition focus:border-terracotta focus:ring-2 focus:ring-terracotta-50" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="h-2" />
-          </div>
-          <div className="border-t border-neutral-100 bg-white px-5 pt-4" style={{ paddingBottom: 'max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))' }}>
-            <div className="mb-3 flex items-center justify-between">
-              <span className="font-semibold text-neutral-500">Total</span>
-              <span className="text-xl font-extrabold text-neutral-900">{formatRupiah(total)}</span>
-            </div>
-            <button type="button" disabled={cart.length === 0} onClick={onCheckout} className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-bold text-white transition active:scale-[0.98] ${cart.length === 0 ? 'bg-neutral-200 text-neutral-400' : 'bg-[#25D366] shadow-lg'}`}>
-              <IconMessageCircle size={18} /> Pesan via WhatsApp
-            </button>
-          </div>
-        </div>
-      </div>
-    </React.Fragment>
-  );
-}
-
-function ConfirmationScreen({ isOpen, total, tableNumber, onOpenWhatsApp, onBack }) {
-  return (
-    <div className={`fixed inset-0 z-[60] flex flex-col items-center justify-center bg-ivory px-6 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-      <button type="button" onClick={onBack} className="absolute left-6 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition active:scale-90" style={{ top: 'max(1.5rem, calc(env(safe-area-inset-top) + 0.5rem))' }}><IconX size={18} className="text-neutral-500" /></button>
-      <Flourish className="mb-2 text-terracotta-300" />
-      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-terracotta"><IconCheck size={34} className="text-terracotta" /></div>
-      <p className="mb-2 text-sm font-bold uppercase tracking-wide text-terracotta">Siap Dikirim</p>
-      <h2 className="mb-2 text-center text-2xl font-extrabold text-neutral-900">Pesanan Anda Siap</h2>
-      <p className="mb-8 max-w-xs text-center leading-relaxed text-neutral-500">WhatsApp akan terbuka dengan pesanan Anda untuk {tableNumber || 'meja Anda'}.</p>
-      <div className="mb-4 flex w-full max-w-sm items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-sm">
-        <span className="font-semibold text-neutral-500">Total</span>
-        <span className="text-xl font-extrabold text-terracotta">{formatRupiah(total)}</span>
-      </div>
-      <button type="button" onClick={onOpenWhatsApp} className="mb-3 flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-terracotta py-4 text-[15px] font-bold text-white shadow-lg shadow-terracotta/30 transition active:scale-[0.98]"><IconMessageCircle size={18} /> Buka WhatsApp</button>
-      <button type="button" onClick={onBack} className="w-full max-w-sm rounded-2xl border-2 border-terracotta py-4 text-[15px] font-bold text-terracotta transition active:scale-[0.98]">Kembali ke Menu</button>
-    </div>
-  );
-}
-
-function App() {
-  const [customerName, setCustomerName] = useState('');
-  const [tableNumber, setTableNumber] = useState('');
-  const [nameError, setNameError] = useState(false);
-  const [tableError, setTableError] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [orderMessage, setOrderMessage] = useState('');
-
-  const nameRef = useRef(null);
-  const tableRef = useRef(null);
-  const topRef = useRef(null);
-
-  useEffect(() => {
-    document.body.style.overflow = isCartOpen || isConfirmOpen ? 'hidden' : '';
-  }, [isCartOpen, isConfirmOpen]);
-
-  const menuById = useMemo(() => {
-    const map = {};
-    MENU_ITEMS.forEach((item) => { map[item.id] = item; });
-    return map;
-  }, []);
-
-  const filteredItems = useMemo(() => MENU_ITEMS.filter((item) => item.category === activeCategory), [activeCategory]);
-  const cartCount = cart.reduce((sum, l) => sum + l.qty, 0);
-  const cartTotal = cart.reduce((sum, l) => sum + l.qty * menuById[l.id].price, 0);
-
-  function getQtyInCart(id) {
-    const line = cart.find((l) => l.id === id);
-    return line ? line.qty : 0;
-  }
-  function addToCart(id) {
-    setCart((prev) => {
-      const existing = prev.find((l) => l.id === id);
-      if (existing) return prev.map((l) => (l.id === id ? { ...l, qty: l.qty + 1 } : l));
-      return [...prev, { id, qty: 1, note: '' }];
-    });
-  }
-  function incrementQty(id) { setCart((prev) => prev.map((l) => (l.id === id ? { ...l, qty: l.qty + 1 } : l))); }
-  function decrementQty(id) { setCart((prev) => prev.map((l) => (l.id === id ? { ...l, qty: l.qty - 1 } : l)).filter((l) => l.qty > 0)); }
-  function updateNote(id, note) { setCart((prev) => prev.map((l) => (l.id === id ? { ...l, note } : l))); }
-  function handleNameChange(e) { setCustomerName(e.target.value); if (nameError) setNameError(false); }
-  function handleTableChange(e) { setTableNumber(e.target.value); if (tableError) setTableError(false); }
-
-  function buildOrderMessage() {
     const itemLines = cart.map((line) => {
       const item = menuById[line.id];
-      let text = `${line.qty}x ${item.name} - ${formatRupiah(item.price * line.qty)}`;
-      if (line.note.trim()) text += `\n   Catatan: ${line.note.trim()}`;
-      return text;
+      return `${line.qty}x ${item.name} - ${formatRupiah(item.price * line.qty)}${line.note.trim() ? `\n   Catatan: ${line.note.trim()}` : ''}`;
     }).join('\n');
-    return ['*PESANAN BARU - AMONEMAN*', '', `Nama: ${customerName.trim()}`, `Meja: ${tableNumber}`, '', '--------------------------', itemLines, '--------------------------', '', `*Total: ${formatRupiah(cartTotal)}*`, '', 'Terima kasih!'].join('\n');
+    setOrderMessage(['*PESANAN BARU - AMONEMAN*', '', `Nama: ${customerName.trim()}`, `Meja: ${tableNumber}`, '', '--------------------------', itemLines, '--------------------------', '', `*Total: ${formatRupiah(cartTotal)}*`, '', 'Terima kasih!'].join('\n'));
+    setIsCartOpen(false); setIsConfirmOpen(true);
   }
-
-  function handleCheckoutClick() {
-    const missingName = !customerName.trim();
-    const missingTable = !tableNumber;
-    setNameError(missingName); setTableError(missingTable);
-    if (missingName || missingTable) {
-      setIsCartOpen(false);
-      window.setTimeout(() => {
-        if (topRef.current) topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        const target = missingName ? nameRef.current : tableRef.current;
-        if (target) target.focus();
-      }, 320);
-      return;
-    }
-    setOrderMessage(buildOrderMessage());
-    setIsCartOpen(false);
-    setIsConfirmOpen(true);
-  }
-
-  function handleOpenWhatsApp() {
-    const RESTAURANT_WHATSAPP_NUMBER = '6281935585910';
-    window.open(`https://wa.me/${RESTAURANT_WHATSAPP_NUMBER}?text=${encodeURIComponent(orderMessage)}`, '_blank');
-    setCart([]);
-    setIsConfirmOpen(false);
-  }
-
-  function handleBackToMenu() { setIsConfirmOpen(false); }
 
   return (
-    <div className="min-h-screen bg-ivory font-sans text-neutral-900">
-      <div className="mx-auto max-w-md">
-        <Header />
-        <div ref={topRef}>
-          <OrderInfoForm name={customerName} table={tableNumber} nameError={nameError} tableError={tableError} onNameChange={handleNameChange} onTableChange={handleTableChange} nameRef={nameRef} tableRef={tableRef} />
+    <div className="mx-auto max-w-md pb-28">
+      <header className="sticky top-0 z-30 flex items-center justify-center border-b border-neutral-100 bg-white py-2"><img src="./logo.jpg" alt="Amoneman Logo" className="h-24 object-contain" onError={(e) => e.target.style.display='none'} /></header>
+      <section className="px-4 pb-3 pt-5">
+        <div className="mb-4">
+          <label className="mb-1.5 block text-sm font-semibold text-neutral-700">Nama Pemesan</label>
+          <input ref={nameRef} type="text" value={customerName} onChange={(e) => { setCustomerName(e.target.value); setNameError(false); }} placeholder="Masukkan nama Anda" className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-[15px] outline-none ${nameError ? 'border-red-400' : 'border-neutral-200 focus:border-terracotta'}`} />
         </div>
-        <CategoryTabs categories={CATEGORIES} active={activeCategory} onChange={setActiveCategory} />
-        <main className="flex flex-col gap-3 px-4 pb-28">
-          {filteredItems.map((item) => (
-            <MenuCard key={item.id} item={item} qtyInCart={getQtyInCart(item.id)} onAdd={addToCart} />
-          ))}
-        </main>
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-neutral-700">Pilih Meja</label>
+          <div className="relative">
+            <select ref={tableRef} value={tableNumber} onChange={(e) => { setTableNumber(e.target.value); setTableError(false); }} className={`w-full appearance-none rounded-2xl border bg-white px-4 py-3.5 pr-10 text-[15px] outline-none ${tableError ? 'border-red-400' : 'border-neutral-200 focus:border-terracotta'}`}>
+              <option value="" disabled>Pilih nomor meja</option><option value="Take Away">Bawa Pulang (Take Away)</option><option value="Meja 1">Meja 1</option><option value="Meja 2">Meja 2</option><option value="Meja 3">Meja 3</option><option value="Meja 4">Meja 4</option><option value="Meja 5">Meja 5</option><option value="Meja 6">Meja 6</option><option value="Meja 7">Meja 7</option><option value="Meja 8">Meja 8</option>
+            </select>
+            <IconChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+          </div>
+        </div>
+      </section>
+      <div className="flex gap-2 overflow-x-auto px-4 pb-3 mt-2">
+        {CATEGORIES.map((cat) => ( <button key={cat} type="button" onClick={() => setActiveCategory(cat)} className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === cat ? 'bg-terracotta text-white' : 'border border-neutral-200 bg-white text-neutral-500'}`}>{cat}</button> ))}
       </div>
-      <CartBar count={cartCount} total={cartTotal} onClick={() => setIsCartOpen(true)} />
+      <main className="flex flex-col gap-3 px-4">
+        {filteredItems.map((item) => {
+          const qty = getQtyInCart(item.id);
+          return (
+            <article key={item.id} className="flex items-center gap-3 rounded-3xl border border-neutral-100 bg-white p-3 shadow-sm">
+              <DishImage src={item.image} alt={item.name} />
+              <div className="min-w-0 flex-1"><h3 className="truncate text-[15px] font-bold text-neutral-800">{item.name}</h3><p className="mt-1 text-[15px] font-extrabold text-terracotta">{formatRupiah(item.price)}</p></div>
+              <button type="button" onClick={() => addToCart(item.id)} className="relative shrink-0 rounded-full border-2 border-terracotta px-4 py-2 text-sm font-bold text-terracotta">
+                Tambah {qty > 0 && <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-[11px] font-bold text-white">{qty}</span>}
+              </button>
+            </article>
+          );
+        })}
+      </main>
+      {cartCount > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center pb-4 px-4">
+          <div className="flex w-full max-w-md items-center justify-between rounded-3xl border border-neutral-100 bg-white p-2 pl-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+            <div className="flex items-center gap-2 text-neutral-700"><IconShoppingBag size={18} /><span className="text-sm font-semibold">{cartCount} item</span><span className="text-neutral-300">|</span><span className="text-sm font-extrabold text-neutral-900">{formatRupiah(cartTotal)}</span></div>
+            <button type="button" onClick={() => setIsCartOpen(true)} className="flex items-center gap-1 rounded-full bg-terracotta px-5 py-3 text-sm font-bold text-white shadow-lg">Cek Pesanan <IconChevronRight size={16} /></button>
+          </div>
+        </div>
+      )}
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} cart={cart} menuById={menuById} onIncrement={incrementQty} onDecrement={decrementQty} onNoteChange={updateNote} total={cartTotal} onCheckout={handleCheckoutClick} />
-      <ConfirmationScreen isOpen={isConfirmOpen} total={cartTotal} tableNumber={tableNumber} onOpenWhatsApp={handleOpenWhatsApp} onBack={handleBackToMenu} />
+      <ConfirmationScreen isOpen={isConfirmOpen} total={cartTotal} tableNumber={tableNumber} onOpenWhatsApp={() => { window.open(`https://wa.me/6281935585910?text=${encodeURIComponent(orderMessage)}`, '_blank'); setCart([]); setIsConfirmOpen(false); }} onBack={() => setIsConfirmOpen(false)} />
     </div>
   );
 }
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
-</html>
+      </html>
+  
